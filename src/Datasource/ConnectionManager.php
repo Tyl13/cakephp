@@ -85,6 +85,19 @@ class ConnectionManager
         }
 
         static::_setConfig($key, $config);
+
+        foreach (static::$_config as $name => $config) {
+            if (preg_match('/(.*):read$/', $name, $matches) === 1) {
+                $writeName = $matches[1];
+                if (empty(static::$_config[$writeName])) {
+                    throw new MissingDatasourceConfigException(sprintf(
+                        'Missing write datasource %s for read-only datasource %s',
+                        $writeName,
+                        $name
+                    ));
+                }
+            }
+        }
     }
 
     /**
@@ -202,5 +215,48 @@ class ConnectionManager
 
         return static::$_registry->{$name}
             ?? static::$_registry->load($name, static::$_config[$name]);
+    }
+
+    /**
+     * Gets the read connection.
+     *
+     * @param string $name The connection name.
+     * @param bool $useAliases Set to false to not use aliased connections.
+     * @return \Cake\Datasource\ConnectionInterface A connection object.
+     * @throws \Cake\Datasource\Exception\MissingDatasourceConfigException When config
+     * data is missing.
+     */
+    public static function getRead(string $name, bool $useAliases = true): ConnectionInterface
+    {
+        if (preg_match('/:read$/', $name) === 1) {
+            return static::get($name, $useAliases);
+        }
+
+        $readName = $name . ':read';
+        if (($useAliases && isset(static::$_aliasMap[$readName])) || !empty(static::$_config[$readName])) {
+            return static::get($readName, $useAliases);
+        }
+
+        return static::get($name, $useAliases);
+    }
+
+    /**
+     * Gets the write connection.
+     *
+     * @param string $name The connection name.
+     * @param bool $useAliases Set to false to not use aliased connections.
+     * @return \Cake\Datasource\ConnectionInterface A connection object.
+     * @throws \Cake\Datasource\Exception\MissingDatasourceConfigException When config
+     * data is missing.
+     */
+    public static function getWrite(string $name, bool $useAliases = true): ConnectionInterface
+    {
+        if (preg_match('/(.*):read$/', $name, $matches) === 1) {
+            $writeName = $matches[1];
+
+            return static::get($writeName, $useAliases);
+        }
+
+        return static::get($name, $useAliases);
     }
 }

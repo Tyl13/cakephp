@@ -25,6 +25,7 @@ use Cake\Database\Expression\QueryExpression;
 use Cake\Database\Expression\ValuesExpression;
 use Cake\Database\Expression\WindowExpression;
 use Cake\Database\Statement\CallbackStatement;
+use Cake\Datasource\ConnectionManager;
 use Closure;
 use InvalidArgumentException;
 use IteratorAggregate;
@@ -227,6 +228,34 @@ class Query implements ExpressionInterface, IteratorAggregate
     public function getConnection(): Connection
     {
         return $this->_connection;
+    }
+
+    /**
+     * Sets the connection for this query to the read-only version of the current connection.
+     *
+     * @return $this
+     */
+    public function useReadConnection()
+    {
+        /** @var \Cake\Database\Connection $read */
+        $read = ConnectionManager::getRead($this->_connection->configName());
+        $this->setConnection($read);
+
+        return $this;
+    }
+
+    /**
+     * Sets the connection for this query to the write version of the current connection.
+     *
+     * @return $this
+     */
+    public function useWriteConnection()
+    {
+        /** @var \Cake\Database\Connection $write */
+        $write = ConnectionManager::getWrite($this->_connection->configName());
+        $this->setConnection($write);
+
+        return $this;
     }
 
     /**
