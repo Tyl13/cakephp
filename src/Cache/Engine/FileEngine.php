@@ -243,13 +243,13 @@ class FileEngine extends CacheEngine
             $this->_config['path'],
             FilesystemIterator::SKIP_DOTS
         );
+        /** @var \RecursiveDirectoryIterator */
         $contents = new RecursiveIteratorIterator(
             $directory,
             RecursiveIteratorIterator::SELF_FIRST
         );
         $cleared = [];
         foreach ($contents as $fileInfo) {
-            assert($fileInfo instanceof SplFileInfo);
             if ($fileInfo->isFile()) {
                 unset($fileInfo);
                 continue;
